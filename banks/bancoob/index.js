@@ -77,8 +77,6 @@ exports.barcodeData = function (boleto) {
         agencia.toString() +
         campoLivre.toString());
 
-    console.log(dvBarra);
-
     var lineData = codigoBanco.toString() +  // 3
         numMoeda.toString() + // 1
         dvBarra.toString() + // 1
