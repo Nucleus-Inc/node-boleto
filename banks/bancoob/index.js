@@ -140,52 +140,50 @@ exports.parseEDIFile = function (fileContent) {
         };
 
         var currentNossoNumero = null;
+        var hasCompanyData = false;
 
         for (var i = 0; i < lines.length; i++) {
             var line = lines[i];
-            var registro = line.substring(7, 8);
+            var registro = line.substring(0, 1);
 
             if (registro == '0') {
-                parsedFile['cnpj'] = line.substring(17, 32);
-                parsedFile['razao_social'] = line.substring(72, 102);
-                parsedFile['agencia_cedente'] = line.substring(32, 36);
-                parsedFile['conta_cedente'] = line.substring(37, 47);
-                parsedFile['data_arquivo'] = helper.dateFromEdiDate(line.substring(143, 152));
-            } else if (registro == '3') {
-                var segmento = line.substring(13, 14);
+                parsedFile['razao_social'] = line.substring(46, 76);
+                parsedFile['data_arquivo'] = helper.dateFromEdiDate(line.substring(94, 100));
+            } else if (registro == '1') {
+                var boleto = {};
 
-                if (segmento == 'T') {
-                    var boleto = {};
+                parsedFile['cnpj'] = formatters.removeTrailingZeros(line.substring(3, 17));
+                parsedFile['carteira'] = formatters.removeTrailingZeros(line.substring(85, 88));
+                parsedFile['agencia_cedente'] = formatters.removeTrailingZeros(line.substring(17, 21));
+                parsedFile['conta_cedente'] = formatters.removeTrailingZeros(line.substring(22, 30));
 
-                    boleto['codigo_ocorrencia'] = line.substring(15, 17);
-                    boleto['vencimento'] = formatters.dateFromEdiDate(line.substring(69, 77));
-                    boleto['valor'] = formatters.removeTrailingZeros(line.substring(77, 92));
-                    boleto['tarifa'] = formatters.removeTrailingZeros(line.substring(193, 208));
-                    boleto['banco_recebedor'] = formatters.removeTrailingZeros(line.substring(92, 95));
-                    boleto['agencia_recebedora'] = formatters.removeTrailingZeros(line.substring(95, 100));
+                boleto['codigo_ocorrencia'] = line.substring(108, 110);
+                boleto['data_ocorrencia'] = helper.dateFromEdiDate(line.substring(110, 116));
+                boleto['data_credito'] = helper.dateFromEdiDate(line.substring(175, 181));
+                boleto['vencimento'] = helper.dateFromEdiDate(line.substring(146, 152));
 
-                    currentNossoNumero = formatters.removeTrailingZeros(line.substring(40, 52));
-                    parsedFile.boletos[currentNossoNumero] = boleto;
-                } else if (segmento == 'U') {
-                    parsedFile.boletos[currentNossoNumero]['valor_pago'] = formatters.removeTrailingZeros(line.substring(77, 92));
+                boleto['valor'] = formatters.removeTrailingZeros(line.substring(152, 165));
+                boleto['valor_pago'] = formatters.removeTrailingZeros(line.substring(253, 266));
+                boleto['valor_tarifa'] = formatters.removeTrailingZeros(line.substring(181, 188));
 
-                    var paid = parsedFile.boletos[currentNossoNumero]['valor_pago'] >= parsedFile.boletos[currentNossoNumero]['valor'];
-                    paid = paid && parsedFile.boletos[currentNossoNumero]['codigo_ocorrencia'] == '17';
+                boleto['banco_recebedor'] = formatters.removeTrailingZeros(line.substring(165, 168));
+                boleto['agencia_recebedora'] = formatters.removeTrailingZeros(line.substring(168, 173));
 
-                    var boleto = parsedFile.boletos[currentNossoNumero];
+                boleto['edi_line_number'] = i;
+                boleto['edi_line_checksum'] = ediHelper.calculateLineChecksum(line);
+                boleto['edi_line_fingerprint'] = boleto['edi_line_number'] + ':' + boleto['edi_line_checksum'];
 
-                    boleto['pago'] = paid;
-                    boleto['edi_line_number'] = i;
-                    boleto['edi_line_checksum'] = ediHelper.calculateLineChecksum(line);
-                    boleto['edi_line_fingerprint'] = boleto['edi_line_number'] + ':' + boleto['edi_line_checksum'];
+                var isPaid = (parseInt(boleto['valor_pago']) >= parseInt(boleto['valor']) || boleto['codigo_ocorrencia'] == '06');
+                boleto['pago'] = isPaid;
 
-                    currentNossoNumero = null;
-                }
+                currentNossoNumero = formatters.removeTrailingZeros(line.substring(62, 73));
+                parsedFile.boletos[currentNossoNumero] = boleto;
             }
         }
 
         return parsedFile;
     } catch (e) {
+        console.log(e);
         return null;
     }
 };
