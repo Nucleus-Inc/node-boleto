@@ -9,7 +9,7 @@ exports.options = {
 
 exports.dvBarra = function (barra) {
     var resto2 = formatters.mod11(barra, 9, 1);
-    return (resto2 == 0 || resto2 == 1 || resto2 > 9 ) ? 1 : 11 - resto2;
+    return (resto2 == 0 || resto2 == 1 || resto2 == 10) ? 1 : 11 - resto2;
 }
 
 exports.dvGeral = function(nossoNumero) {
@@ -53,8 +53,31 @@ exports.barcodeData = function (boleto) {
         nossoNumero.toString() + // 17
         nossoNumeroDv.toString(); // 2
 
-    var barCalcDv = bar2.toString()+bar1.toString();
-    var dv = this.dvBarra(barCalcDv.toString());
+    var calculoDv = 0;
+    var mult = 2;
+
+    for(var x = (bar2.length-1); x >= 0; x--) {
+        var n = parseInt(bar2.charAt(x));
+        calculoDv += n*mult;
+
+        mult++;
+        if (mult==10) {
+            mult=2;
+        }
+    }
+
+    for(var x = (bar1.length-1); x >= 0; x--) {
+        var n = parseInt(bar1.charAt(x));
+        calculoDv += n*mult;
+
+        mult++;
+        if (mult==10) {
+            mult=2;
+        }
+    }
+
+    var resto = calculoDv % 11;
+    var dv = (resto == 0 || resto == 1 || resto == 10) ? 1 : 11 - resto;
 
     var lineData = bar1.toString()+dv.toString()+bar2.toString();
     return lineData;
