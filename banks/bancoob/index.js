@@ -16,9 +16,6 @@ exports.barcodeData = function (boleto) {
     var codigoBanco = this.options.codigo;
 
     var numMoeda = "9";
-    var fixo = "9"; // Numero fixo para a posição 05-05
-    var ios = "0"; // IOS - somente para Seguradoras (Se 7% informar 7, limitado 9%) - demais clientes usar 0
-
     var fatorVencimento = formatters.fatorVencimento(boleto['data_vencimento']);
 
     var valor = formatters.addTrailingZeros(boleto['valor'], 10);
@@ -30,36 +27,16 @@ exports.barcodeData = function (boleto) {
 
     var sequencia = agencia + codigoCedente + formatters.addTrailingZeros(boleto['nosso_numero'], 7);
     var calculoDv = 0;
-    var cont = 0;
-    for (var num = 0; num <= sequencia.length; num++) {
-        cont++;
-
-        var constante = null;
-        if (cont == 1) {
-            // constante fixa Sicoob » 3197
-            constante = 3;
+    var indice = [4,3,2,9,0,8,7,6,5,4,3,2,9,8,7,6,5,4,3,2,9,8,7,6,5,4,3,2,9,8,7,6,5,4,3,2,9,8,7,6,5,4,3,2];
+    for (var num = 0; num < sequencia.length; num++) {
+        if (num != 4) {
+            var constante = indice[num];
+            calculoDv += parseInt(sequencia.substr(num, 1)) * constante;
         }
-        if (cont == 2) {
-            constante = 1;
-        }
-        if (cont == 3) {
-            constante = 9;
-        }
-        if (cont == 4) {
-            constante = 7;
-            cont = 0;
-        }
-        calculoDv = calculoDv + (sequencia.substr(num, 1) * constante);
     }
 
     var resto = calculoDv % 11;
-    var dv;
-    if (resto == 0 || resto == 1) {
-        dv = 0;
-    }
-    else {
-        dv = 11 - resto;
-    }
+    var dv = (resto == 0 || resto == 1 || resto == 10) ? 1 : 11 - resto;
 
     var modalidadeCobranca = '02';
     var numeroParcela = '000';
@@ -69,7 +46,7 @@ exports.barcodeData = function (boleto) {
         nossoNumero.toString() + // 8
         numeroParcela.toString(); // 1
 
-    var dvBarra = formatters.mod11(codigoBanco.toString() +
+    var dvBarra = this.dvBarra(codigoBanco.toString() +
         numMoeda.toString() +
         fatorVencimento.toString() +
         valor.toString() +
