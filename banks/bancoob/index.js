@@ -26,21 +26,22 @@ exports.barcodeData = function (boleto) {
     var convenio = formatters.addTrailingZeros(boleto['codigo_cedente'], 7);
 
     var sequencia = agencia + codigoCedente + formatters.addTrailingZeros(boleto['nosso_numero'], 7);
+
     var calculoDv = 0;
-    var indice = [4,3,2,9,0,8,7,6,5,4,3,2,9,8,7,6,5,4,3,2,9,8,7,6,5,4,3,2,9,8,7,6,5,4,3,2,9,8,7,6,5,4,3,2];
+    var indice = [3,1,9,7,3,1,9,7,3,1,9,7,3,1,9,7,3,1,9,7,3]
     for (var num = 0; num < sequencia.length; num++) {
         if (num != 4) {
             var constante = indice[num];
-            calculoDv += parseInt(sequencia.substr(num, 1)) * constante;
+            calculoDv += parseInt(sequencia[num]) * constante;
         }
     }
 
     var resto = calculoDv % 11;
-    var dv = (resto == 0 || resto == 1 || resto == 10) ? 1 : 11 - resto;
+    var dv = (resto == 0 || resto == 1) ? 0 : 11 - resto;
 
     var modalidadeCobranca = '02';
     var numeroParcela = '000';
-    var nossoNumero = formatters.addTrailingZeros(boleto['nosso_numero'], 7) + dv;
+    var nossoNumero = formatters.addTrailingZeros(boleto['nosso_numero'], 7) + dv.toString();
     var campoLivre = modalidadeCobranca.toString() + // 2
         convenio.toString() + // 7
         nossoNumero.toString() + // 8
