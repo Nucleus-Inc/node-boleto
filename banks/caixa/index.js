@@ -9,30 +9,11 @@ exports.options = {
 
 exports.dvBarra = function (barra) {
     var resto2 = formatters.mod11(barra, 9, 1);
-    return (resto2 == 0 || resto2 == 1 || resto2 == 10) ? 1 : 11 - resto2;
+    return (resto2 == 0 || resto2 == 1 || resto2 > 9 ) ? 1 : 11 - resto2;
 }
 
 exports.dvGeral = function(nossoNumero) {
-    var calculoDv = 0;
-    var mult = 2;
-
-    for(var x = (nossoNumero.length-1); x >= 0; x--) {
-        var n = parseInt(nossoNumero.charAt(x));
-        calculoDv += n * mult;
-
-        mult++;
-        if (mult==10) {
-            mult=2;
-        }
-    }
-
-    var resto = calculoDv % 11;
-    var dv  = 11 - resto;
-    if (dv > 9) {
-        return 0;
-    }
-
-    return dv;
+    return formatters.mod11(nossoNumero.toString(), 9, 0);
 }
 
 exports.barcodeData = function (boleto) {
@@ -62,7 +43,7 @@ exports.barcodeData = function (boleto) {
                                      convenioDv.toString() +
                                      nossoNumero);
 
-    var bar1 = lineData = codigoBanco.toString() +  // 3
+    var bar1 = codigoBanco.toString() +  // 3
                numMoeda.toString(); // 1
 
     var bar2 = fatorVencimento.toString() + // 4
@@ -72,31 +53,8 @@ exports.barcodeData = function (boleto) {
         nossoNumero.toString() + // 17
         nossoNumeroDv.toString(); // 2
 
-    var calculoDv = 0;
-    var mult = 2;
-
-    for(var x = (bar2.length-1); x >= 0; x--) {
-        var n = parseInt(bar2.charAt(x));
-        calculoDv += n*mult;
-
-        mult++;
-        if (mult==10) {
-            mult=2;
-        }
-    }
-
-    for(var x = (bar1.length-1); x >= 0; x--) {
-        var n = parseInt(bar1.charAt(x));
-        calculoDv += n*mult;
-
-        mult++;
-        if (mult==10) {
-            mult=2;
-        }
-    }
-
-    var resto = calculoDv % 11;
-    var dv = (resto == 0 || resto == 1 || resto == 10) ? 1 : 11 - resto;
+    var barCalcDv = bar2.toString()+bar1.toString();
+    var dv = this.dvBarra(barCalcDv.toString());
 
     var lineData = bar1.toString()+dv.toString()+bar2.toString();
     return lineData;
