@@ -3,7 +3,7 @@ var formatters = require('../../lib/formatters'),
     helper = require('./helper');
 
 exports.options = {
-    logoURL: 'https://app.meucrediario.com.br/images/public/boleto/001.png',
+    logoURL: 'https://s3.amazonaws.com/boleto.meucrediario.com.br/001.png',
     codigo: '001'
 }
 
