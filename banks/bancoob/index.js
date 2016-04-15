@@ -3,14 +3,14 @@ var formatters = require('../../lib/formatters'),
     helper = require('./helper');
 
 exports.options = {
-    logoURL: 'http://app.meucrediario.com.br/images/public/boleto/756.png',
+    logoURL: 'https://app.meucrediario.com.br/images/public/boleto/756.png',
     codigo: '756'
-}
+};
 
 exports.dvBarra = function (barra) {
     var resto2 = formatters.mod11(barra, 9, 1);
     return (resto2 == 0 || resto2 == 1 || resto2 == 10) ? 1 : 11 - resto2;
-}
+};
 
 exports.barcodeData = function (boleto) {
     var codigoBanco = this.options.codigo;
@@ -108,7 +108,7 @@ exports.linhaDigitavel = function (barcodeData) {
     campos.push(campo);
 
     return campos.join(" ");
-}
+};
 
 exports.parseEDIFile = function (fileContent) {
     try {
@@ -164,4 +164,59 @@ exports.parseEDIFile = function (fileContent) {
         console.log(e);
         return null;
     }
+};
+
+exports.getHeaderEdiFile = function (params) {
+    var sequencial = formatters.addTrailingZeros(params.sequencia||1, 6);
+
+    var line = '0'; // Identificação do Registro Header - 1
+    line += '1'; // Tipo de Operação - 1
+    line += 'REMESSA';  // Identificação por Extenso do Tipo de Operação - 7
+    line += '01';  // Identificação do Tipo de Serviço - 2
+    line += 'COBRANÇA';  // Identificação por Extenso do Tipo de Serviço - 8
+    line += '       ';  // Complemento do Registro: Brancos - 7
+    line += formatters.addTrailingZeros(params.agencia, 4);  // Prefixo da Cooperativa - 4
+    line += formatters.mod11(params.agencia);  // Dígito Verificador do Prefixo - 1
+    line += formatters.addTrailingZeros(params.codigo_cedente, 8);  // Código do Cliente/Beneficiário - 8
+    line += formatters.mod11(params.codigo_cedente);  // Dígito Verificador do Código - 1
+    line += '      ';  // Número do convênio líder: Brancos - 6
+    line += formatters.addTrailingSpaces(params.cedente, 30); // Nome do Beneficiário - 30
+    line += '756BANCOOBCED'; // Identificação do Banco: "756BANCOOBCED" - 18
+    line += formatters.formatDate(params.data_geracao||new Date(), "ddmmaa"); // Data da Gravação da Remessa: formato ddmmaa - 6
+    line += '0'+sequencial.toString(); // Seqüencial da Remessa: número seqüencial acrescido de 1 a cada remessa. Inicia com "0000001" - 7
+    line += formatters.addTrailingSpaces('', 287);  // Complemento do Registro: Brancos - 287
+    line += sequencial.toString(); // Seqüencial do Registro:”000001” - 6
+
+    return line;
+};
+
+exports.getDetail = function(params, boleto) {
+    var line = '1'; // Identificação do Registro Detalhe: 1 (um) - 1
+
+    /*
+        Tipo de Inscrição do Beneficiário:
+        "01" = CPF
+        "02" = CNPJ  - 2
+     */
+    var numero = "";
+    if ((boleto.pagador_cnpj) && (boleto.pagador_cnpj.toString().length >= 14)) {
+        line += '02';
+        line += formatters.addTrailingZeros(boleto.pagador_cnpj.toString(), 14); // Número do CPF/CNPJ do Beneficiário - 14
+    } else {
+        line += '01';
+        line += formatters.addTrailingZeros(boleto.pagador_cpf.toString(), 14); // Número do CPF/CNPJ do Beneficiário - 14
+    }
+
+    line += formatters.addTrailingZeros(params.agencia, 4);  // Prefixo da Cooperativa - 4
+    line += formatters.mod11(params.agencia);  // Dígito Verificador do Prefixo - 1
+    line += formatters.addTrailingZeros(params.conta, 8);  // Conta Corrente - 8
+    line += formatters.mod11(params.conta);  // Dígito Verificador da Conta - 1
+    line += formatters.addTrailingZeros(params.codigo_cedente, 6);  // Número do Convênio de Cobrança do Beneficiário - 6
+    line += formatters.addTrailingSpaces('', 25);  // Número de Controle do Participante: Brancos - 25
+    line += formatters.addTrailingZeros(boleto["nosso_numero"], 11);  // Nosso Número - 11
+    line += formatters.addTrailingZeros(boleto["nosso_numero_dv"], 1);  // Digito verificador do Nosso Número - 1
+    line += formatters.addTrailingZeros(boleto["parcela"]||'1', 2);  // Número da Parcela: "01" se parcela única - 2
+    line += '00'; // Grupo de Valor: "00" - 2
+
+    return line;
 };
