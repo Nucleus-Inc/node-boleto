@@ -119,32 +119,18 @@ exports.parseEDIFile = function(fileContent){
         parsedFile['conta_cedente'] = formatters.removeTrailingZeros(line.substring(23, 28));
 
         boleto['codigo_ocorrencia'] = line.substring(108, 110);
-        var ocorrenciasStr = line.substring(318, 328);
-        var motivosOcorrencia = new Array();
-        var isPaid = (parseInt(boleto['valor_pago']) >= parseInt(boleto['valor']) || boleto['codigo_ocorrencia'] == '06');
-
-        for(var j = 0; j < ocorrenciasStr.length; j += 2) {
-          var ocorrencia = ocorrenciasStr.substr(j, 2);
-          motivosOcorrencia.push(ocorrencia);
-
-          if(ocorrencia != '00') {
-          isPaid = false;
-          }
-        }
-
-        //boleto['motivos_ocorrencia'] = motivosOcorrencia;
+        boleto['mensagem_informativa'] = line.substring(354, 377).trim();
 
         boleto['numero_documento'] = formatters.addTrailingSpaces(line.substring(37, 62),10);
         boleto['nosso_numero'] = formatters.removeTrailingZeros(line.substring(62, 70));
-        /*boleto['data_ocorrencia'] = helper.dateFromEdiDate(line.substring(110, 116));
+        boleto['data_ocorrencia'] = helper.dateFromEdiDate(line.substring(110, 116));
         boleto['data_credito'] = helper.dateFromEdiDate(line.substring(295, 301));
-        boleto['vencimento'] = helper.dateFromEdiDate(line.substring(110, 116));*/   
-        boleto['nome_sacado'] = line.substring(324, 354);     
+        boleto['vencimento'] = helper.dateFromEdiDate(line.substring(110, 116)); 
+        boleto['nome_sacado'] = line.substring(324, 354).trim();     
         boleto['valor_pago'] = formatters.removeTrailingZeros(line.substring(253, 266));
         boleto['valor'] = formatters.removeTrailingZeros(line.substring(152, 165));
         boleto['banco_recebedor'] = formatters.removeTrailingZeros(line.substring(165, 168));
         boleto['agencia_recebedora'] = formatters.removeTrailingZeros(line.substring(168, 173));
-        boleto['paid'] = isPaid;
         boleto['edi_line_number'] = i;
         boleto['edi_line_checksum'] = ediHelper.calculateLineChecksum(line);
         boleto['edi_line_fingerprint'] = boleto['edi_line_number'] + ':' + boleto['edi_line_checksum'];
