@@ -120,6 +120,10 @@
   .mt23{margin-top:23px;}
   .pb4{padding-bottom:14px;}
   .ebc{width:4px;height:440px;border-right:dotted 1px #000000;margin-right:4px;}
+  .content-img-partner{max-width: 75px;}
+  .content-img-partner img{width: 120px;}
+  .profile-partner{font:12px sans-serif, "arial narrow";color:#000033;height:13px;max-width: 330px;}
+  .invoice-obs{font:12px sans-serif, "arial narrow";color:#000033;height:13px;padding-top:10px;padding-bottom:10px;max-width: 666px;}
   <% if (barcode_render_engine == 'bmp') { %>
 	.barcode {
 		background-image: url(data:image/bmp;base64,<%= barcode_data %>);
@@ -173,12 +177,12 @@
 <body>
 	<div style="padding-left:40px">
 	<table class="w666">
-        <tr class="cpN">
+        <!-- <tr class="cpN">
             <td class="At Ac">Instruções de Impressão</td>
         </tr>
         <tr class="ti">
             <td class="At Ac">Imprimir em impressora jato de tinta (ink jet) ou laser em qualidade normal. (Não use modo econômico).<br>Utilize folha A4 (210 x 297 mm) ou Carta (216 x 279 mm) - Corte na linha indicada<br></td>
-        </tr>
+        </tr> -->
         <tr class="ti">
             <td class="At Ac">
 				<br/>
@@ -187,14 +191,36 @@
 				</form>
 			</td>
         </tr>
-    </table><br /><table class="w666">
+    </table>
+    
+    <br /><table class="w666">
         <tr>
             <td class="ctN cut" />
         </tr>
         <tr>
             <td class="cpN Ar">Recibo do Pagador</td>
         </tr>
-    </table><br /><table class="w666">
+    </table>
+    <% if (boleto['perfil'] && boleto['perfil'] !== '') { %>
+        <table class="w666">
+            <tr>
+                <td class="content-img-partner">
+                    <img src="<%= boleto['logoUrl'] %>">
+                </td>
+                <td class="profile-partner" >
+                    <strong>SACADO</strong> <br> 
+                    <%= boleto['perfil'] %>
+                </td>
+            </tr>
+            <tr>
+                <td class="invoice-obs" colspan="2"><%= boleto['observacoes'] %></td>
+            </tr>
+    
+        </table>
+        
+       <% } %>
+   
+    <br /><table class="w666">
         <tr class="BHead">
 			<td class="imgLogo Al"><img src="<%= logoURL %>" /></td>
             <td class="barra"></td>
